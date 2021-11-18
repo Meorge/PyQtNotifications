@@ -1,13 +1,14 @@
 from enum import IntEnum
 from PyQt6.QtCore import QObject
 
-global userNotificationsEnabled
 userNotificationsEnabled = True
 try:
     import UserNotifications
 except ImportError:
     print(f'UserNotifications could not be imported')
     userNotificationsEnabled = False
+
+# Using code from https://stackoverflow.com/q/57381422 as a base
 
 class QMacNotification(QObject):
     class AuthorizationOptions(IntEnum):
@@ -20,8 +21,7 @@ class QMacNotification(QObject):
         PostNoninterruptingNotificationsToNotificationCenter = 1 << 6
         NoOptions = 0
 
-    def __init__(self, title: str = None, subtitle: str = None, body: str = None, badge: int = None, userInfo: dict = None, parent=None):
-        global userNotificationsEnabled
+    def __init__(self, title: str = None, subtitle: str = None, body: str = None, badge: int = None, userInfo: dict = None, options: AuthorizationOptions = 0, parent=None):
         super().__init__(parent)
 
         if userNotificationsEnabled:
@@ -32,6 +32,7 @@ class QMacNotification(QObject):
         if body is not None: self.setBody(body)
         if badge is not None: self.setBadge(badge)
         if userInfo is not None: self.setUserInfo(userInfo)
+        if options is not None: self.setOptions(options)
 
     __title: str = ''
     def title(self) -> str: return self.__title
@@ -77,14 +78,11 @@ class QMacNotification(QObject):
     def options(self) -> AuthorizationOptions: return self.__options
     def setOptions(self, options: AuthorizationOptions): self.__options = options
 
-
-
     def onNotificationPosted(self, err):
-        print(f'Error in notification callback: {err}')
+        pass
 
     def onAuthResult(self, granted, err):
-        print("Granted: ",granted,)
-        print("Error in authorization request: ",err)
+        pass
 
     def exec(self):
         if not userNotificationsEnabled:
