@@ -1,11 +1,13 @@
 from enum import IntEnum
 from PyQt6.QtCore import QObject
 
-__userNotificationsEnabled = True
+global userNotificationsEnabled
+userNotificationsEnabled = True
 try:
     import UserNotifications
 except ImportError:
-    __userNotificationsEnabled = False
+    print(f'UserNotifications could not be imported')
+    userNotificationsEnabled = False
 
 class QMacNotification(QObject):
     class AuthorizationOptions(IntEnum):
@@ -18,26 +20,33 @@ class QMacNotification(QObject):
         PostNoninterruptingNotificationsToNotificationCenter = 1 << 6
         NoOptions = 0
 
-    def __init__(self, parent=None):
+    def __init__(self, title: str = None, subtitle: str = None, body: str = None, badge: int = None, userInfo: dict = None, parent=None):
+        global userNotificationsEnabled
         super().__init__(parent)
 
-        if __userNotificationsEnabled:
+        if userNotificationsEnabled:
             self.__notif = UserNotifications.UNMutableNotificationContent.alloc().init()
+
+        if title is not None: self.setTitle(title)
+        if subtitle is not None: self.setSubtitle(subtitle)
+        if body is not None: self.setBody(body)
+        if badge is not None: self.setBadge(badge)
+        if userInfo is not None: self.setUserInfo(userInfo)
 
     __title: str = ''
     def title(self) -> str: return self.__title
     def setTitle(self, title: str):
         self.__title = title
 
-        if __userNotificationsEnabled:
+        if userNotificationsEnabled:
             self.__notif.setTitle_(self.__title)
 
     __subtitle: str = ''
-    def item(self) -> str: return self.__subtitle
+    def subtitle(self) -> str: return self.__subtitle
     def setSubtitle(self, subtitle: str):
         self.__subtitle = subtitle
 
-        if __userNotificationsEnabled:
+        if userNotificationsEnabled:
             self.__notif.setSubtitle_(self.__subtitle)
 
     __body: str = ''
@@ -45,7 +54,7 @@ class QMacNotification(QObject):
     def setBody(self, body: str):
         self.__body = body
 
-        if __userNotificationsEnabled:
+        if userNotificationsEnabled:
             self.__notif.setBody_(self.__body)
 
     __badge: int = 0
@@ -53,7 +62,7 @@ class QMacNotification(QObject):
     def setBadge(self, badge: int):
         self.__badge = badge
 
-        if __userNotificationsEnabled:
+        if userNotificationsEnabled:
             self.__notif.setBadge_(self.__badge)
 
     __userInfo: dict = {}
@@ -61,7 +70,7 @@ class QMacNotification(QObject):
     def setUserInfo(self, userInfo: dict):
         self.__userInfo = userInfo
 
-        if __userNotificationsEnabled:
+        if userNotificationsEnabled:
             self.__notif.setUserInfo_(self.__userInfo)
 
     __options: AuthorizationOptions = AuthorizationOptions.NoOptions
@@ -78,7 +87,7 @@ class QMacNotification(QObject):
         print("Error in authorization request: ",err)
 
     def exec(self):
-        if not __userNotificationsEnabled:
+        if not userNotificationsEnabled:
             print('Was not able to import UserNotifications, so do nothing')
             return
             
